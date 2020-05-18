@@ -4,7 +4,9 @@
 \name{c57_nos2KO_mouse_countDF}
 \alias{c57_nos2KO_mouse_countDF}
 \title{c57b6J nos2KO metabolomics count matrix}
-\format{A data frame with 668 rows and 36 variables:}
+\format{
+A data frame with 668 rows and 36 variables:
+}
 \usage{
 c57_nos2KO_mouse_countDF
 }

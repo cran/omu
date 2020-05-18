@@ -4,7 +4,9 @@
 \name{c57_nos2KO_mouse_metadata}
 \alias{c57_nos2KO_mouse_metadata}
 \title{c57b6J nos2KO meta data}
-\format{A data frame with 29 rows and 4 variables:}
+\format{
+A data frame with 29 rows and 4 variables:
+}
 \usage{
 c57_nos2KO_mouse_metadata
 }
