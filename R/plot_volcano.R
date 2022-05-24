@@ -6,15 +6,20 @@
 #' i.e. "Class"
 #' @param strpattern A character vector of levels of the column you want the plot to focus on,
 #' i.e. strpattern = c("Carbohydrates", "Organicacids")
-#' @param fill A character vector of colors you want your points to be.
+#' @param fill A character vector of colors you want your points to be. Must be of length
+#' 1 + length(strpattern) to account for points not in strpattern.
 #' Levels of a factor are organzed alphabetically. All levels not in the
 #' strpattern argument will be set to NA.
 #' @param sig_threshold An integer. Creates a horizontal dashed line for a significance threshold.
 #' i.e. sig_threshold = 0.05. Defaut value is 0.05
-#' @param alpha A character vector for setting transparency of factor levels.
+#' @param alpha A character vector for setting transparency of factor levels.Must be of length
+#' 1 + length(strpattern) to account for points not in strpattern.
 #' @param shape A character vector for setting the shapes for your column levels.
+#' Must be of length 1 + length(strpattern) to account for points not in strpattern.
 #' See ggplot2 for an index of shape values.
-#' @param color A character vector of colors for the column levels. If you choose to use shapes
+#' @param color A character vector of colors for the column levels.
+#' Must be of length 1 + length(strpattern) to account for points not in strpattern.
+#' If you choose to use shapes
 #' with outlines, this list will set the outline colors.
 #' @param size Size of the points in the plot
 #' @importFrom ggplot2 ggplot
@@ -52,6 +57,16 @@
 
 plot_volcano <- function(count_data, column, size, strpattern, fill, sig_threshold, alpha, shape,
   color){
+
+ if(is.null(count_data$padj)==TRUE){
+
+   stop("count_data must be the output of omu_summary or omu_anova and have a padj column
+   and a log2FoldChange column")
+
+ }
+
+
+
  log2FoldChange <- padj <- Metabolite <- NULL
 
   if (missing(sig_threshold)){
@@ -71,6 +86,42 @@ plot_volcano <- function(count_data, column, size, strpattern, fill, sig_thresho
         geom_hline(aes(yintercept = -log10(sig_threshold)), linetype = "dashed")
 
   }else{
+
+    if(any(names(count_data) %in% column)==FALSE){
+
+      stop("count_data is missing metabolite metadata. Did you forget to use assign_hierarchy?")
+
+    }
+
+    if(all(strpattern %in% count_data[,column])==FALSE){
+
+      stop("One or more elements in strpattern are missing from column. Did you make a typo?")
+
+    }
+
+    if(isTRUE(length(fill) ==1 + length(strpattern))==FALSE){
+
+      stop("the length of the fill argument must be 1 greater than the strpattern argument")
+
+    }
+
+    if(isTRUE(length(alpha) ==1 + length(strpattern))==FALSE){
+
+      stop("the length of the alpha argument must be 1 greater than the strpattern argument")
+
+    }
+
+    if(isTRUE(length(shape) ==1 + length(strpattern))==FALSE){
+
+      stop("the length of the shape argument must be 1 greater than the strpattern argument")
+
+    }
+
+    if(isTRUE(length(color) ==1 + length(strpattern))==FALSE){
+
+      stop("the length of the color argument must be 1 greater than the strpattern argument")
+
+    }
     data2 = count_data
     data2[,column] <- sapply(data2[,column], function(x) replace(x, x %in% strpattern, NA))
     data2[,column] <- factor(data2[,column])

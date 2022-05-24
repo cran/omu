@@ -10,17 +10,20 @@
 #' @param log_transform TRUE or FALSE value for whether or not log transformation of data is performed
 #' before the t test
 #' @param p_adjust Method for adjusting the p value, i.e. "BH"
-#' @param test_type One of "mwu", "students", or "welch" to determine which means comparison model to use
+#' @param test_type One of "mwu", "students", or "welch" to determine which model to use
+#' @param paired A boolean of TRUE or FALSE. If TRUE, performs a paired sample test. To perform a paired sample test,
+#' metadata must have a column named 'ID' containing the subject IDs.
 #' @importFrom dplyr filter
 #' @importFrom plyr ldply
 #' @importFrom dplyr group_by
 #' @importFrom dplyr summarise_all
-#' @importFrom dplyr funs
 #' @importFrom magrittr %>%
 #' @importFrom stats t.test
 #' @importFrom stats wilcox.test
 #' @importFrom stats p.adjust
 #' @importFrom stats sd
+#' @importFrom stats reshape
+#' @importFrom stats Pair
 #' @examples
 #' \dontshow{c57_nos2KO_mouse_countDF <- c57_nos2KO_mouse_countDF[1:12,]}
 #' omu_summary(count_data = c57_nos2KO_mouse_countDF, metadata = c57_nos2KO_mouse_metadata,
@@ -28,9 +31,95 @@
 #' log_transform = TRUE, p_adjust = "BH", test_type = "welch")
 #' @export
 
-omu_summary <- function(count_data, metadata, numerator, denominator, response_variable,
-                        Factor, log_transform, p_adjust, test_type){
+omu_summary <- function(count_data, metadata, numerator, denominator, response_variable = "Metabolite",
+                        Factor, log_transform = FALSE, p_adjust = "BH", test_type = "welch", paired = FALSE){
 
+if(any(names(count_data) %in% response_variable)==FALSE){
+
+  stop("metabolomics data are missing the response variable column. Did you make a typo?")
+
+}
+
+if(any(names(metadata) %in% Factor)==FALSE){
+
+  stop("metadata is missing Factor column. Did you make a typo?")
+
+}
+
+if(any(metadata[,Factor]==numerator)==FALSE | any(metadata[,Factor]==denominator)==FALSE){
+
+  stop("Factor column in metadata is missing either numerator or denominator values. Did you make a typo?")
+
+}
+
+if(isTRUE(test_type %in% c("welch", "students", "mwu"))==FALSE){
+
+  stop("test_type must be either mwu, students, or welch. Did you make a typo?")
+
+}
+
+if(isTRUE(p_adjust %in% c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY","fdr")==FALSE)){
+
+  stop("incorrect p_adjust method selected. see ?p.adjust for correct options")
+
+}
+
+
+if(paired==TRUE & any(names(metadata) %in% "ID")==FALSE){
+
+  stop("metadata needs an ID column to run paired tests")
+
+}
+
+if(paired==TRUE & nrow(metadata[metadata[,Factor]==numerator,])!=nrow(metadata[metadata[,Factor]==denominator,])){
+
+  stop("group sample sizes must be equal to run paired tests")
+
+}
+
+metadata <- as.data.frame(sapply(metadata, function(x) x <- as.character(x)))
+
+if(identical(as.character(colnames(count_data)[unlist(lapply(count_data, is.numeric))]), as.character(metadata$Sample))==FALSE){
+
+  stop("Sample names in count_data and metadata do not match.")
+
+}
+
+if(any(colnames(metadata)=="Sample")==FALSE){
+
+  stop("metadata is missing Sample column")
+
+}
+
+if (log_transform==TRUE){
+
+find_zeros <- function(x){
+
+x2 <- sapply(x, is.numeric)
+
+x <- x[,x2]
+
+xl <- sapply(x, function(x) any(x==0))
+
+}
+
+if (any(find_zeros(count_data)==TRUE)){
+
+stop("Your data have zero values. If you trust these zeros are legitimate, set log_transform to FALSE and consider
+using the square root to center your data.")
+
+}
+
+}
+
+if (is.null(nrow(check_zeros(count_data = count_data, metadata = metadata, Factor = Factor, response_variable = response_variable)))==FALSE) {
+
+  warning("There are zero values in at least 25 percent of your samples within at least one of your Factor
+          levels for these metabolites. Consider using check_zeros to subset your data.")
+
+  print(unique(check_zeros(count_data = count_data, metadata = metadata, Factor = Factor,
+                           numerator = numerator, denominator = denominator, response_variable = response_variable)[,1]))
+}
 
   #Temporarily separate meta data from counts and store in other object
   rownames(count_data) <- count_data[,response_variable]
@@ -69,41 +158,105 @@ omu_summary <- function(count_data, metadata, numerator, denominator, response_v
   #Create arguments for T Test function
   model = data_mod[, "Factor"]
 
-  #T Test function in function envir. Iterates T_Test across all response variables
-  if(test_type == "students"){
-  Run_Tests <- function(data_Log, Vect, model) {
-    results <- ldply(
-      Vect, function(Metabolite) {
-        t_val = t.test(data_mod[[Metabolite]] ~ model)$statistic
-        p_val = t.test(data_mod[[Metabolite]] ~ model)$p.value
-        return(data.frame(Metabolite=Metabolite, t_value=t_val, pval = p_val))
-      })
-  }
-  }else if(test_type == "mwu"){
-    Run_Tests <- function(data_Log, Vect, model) {
-      results <- ldply(
-        Vect, function(Metabolite) {
-          t_val = wilcox.test(data_mod[[Metabolite]] ~ model)$statistic
-          p_val = wilcox.test(data_mod[[Metabolite]] ~ model)$p.value
-          return(data.frame(Metabolite=Metabolite, t_value=t_val, pval = p_val))
-        })
-    }
-  }else if(test_type == "welch"){
-    Run_Tests <- function(data_Log, Vect, model) {
-      results <- ldply(
-        Vect, function(Metabolite) {
-          t_val = t.test(data_mod[[Metabolite]] ~ model, var.equal = FALSE)$statistic
-          p_val = t.test(data_mod[[Metabolite]] ~ model, var.equal = FALSE)$p.value
-          return(data.frame(Metabolite=Metabolite, t_value=t_val, pval = p_val))
-        })
-  }
-  }
-  results <- Run_Tests(data_Log = data_Log, Vect = Vect, model = model)
+  if(paired==TRUE){
 
+    data_mod$ID <- metadata$ID
+    data_mod_list <- as.list(data_mod[,sapply(data_mod, is.numeric)])
+    data_mod_list <- lapply(data_mod_list, function(x){ x <- cbind(x, data_mod[,c("Factor","ID")])})
+    data_mod_list <- lapply(data_mod_list, function(x) reshape(x, direction = "wide", idvar = "ID", timevar = "Factor"))
+
+    if(test_type == "students"){
+
+    Run_Tests_paired <- function(data_mod_list) {
+      results <- ldply(data_mod_list, function(x) {
+        t_val = t.test(Pair(x[,2], x[,3]) ~ 1, var.equal = TRUE)$statistic
+        p_val = t.test(Pair(x[,2], x[,3]) ~ 1, var.equal = TRUE)$p.value
+        return(data.frame(t_value = t_val,
+                          pval = p_val))
+      })
+    }
+
+    }else if(test_type == "welch"){
+
+
+      Run_Tests_paired <- function(data_mod_list) {
+        results <- ldply(data_mod_list, function(x) {
+          t_val = t.test(Pair(x[,2], x[,3]) ~ 1, var.equal = FALSE)$statistic
+          p_val = t.test(Pair(x[,2], x[,3]) ~ 1, var.equal = FALSE)$p.value
+          return(data.frame(t_value = t_val,
+                            pval = p_val))
+
+
+        })
+      }
+
+    }else if(test_type=="mwu"){
+
+
+      Run_Tests_paired <- function(data_mod_list) {
+        results <- ldply(data_mod_list, function(x) {
+          t_val = wilcox.test(Pair(x[,2], x[,3]) ~ 1)$statistic
+          p_val = wilcox.test(Pair(x[,2], x[,3]) ~ 1)$p.value
+          return(data.frame(t_value = t_val,
+                            pval = p_val))
+
+
+      })
+      }
+    }
+
+
+    results <- Run_Tests_paired(data_mod_list)
+
+    colnames(results)[1] <- "Metabolite"
+
+
+
+
+  }else if(paired==FALSE){
+
+  if (test_type == "students") {
+    Run_Tests <- function(data_mod, Vect, model) {
+      results <- ldply(Vect, function(Metabolite) {
+        t_val = t.test(data_mod[[Metabolite]] ~ model, var.equal = TRUE)$statistic
+        p_val = t.test(data_mod[[Metabolite]] ~ model, var.equal = TRUE)$p.value
+        return(data.frame(Metabolite = Metabolite, t_value = t_val,
+                          pval = p_val))
+      })
+    }
+  }
+  else if (test_type == "mwu") {
+    Run_Tests <- function(data_mod, Vect, model) {
+      results <- ldply(Vect, function(Metabolite) {
+        t_val = wilcox.test(data_mod[[Metabolite]] ~
+                              model)$statistic
+        p_val = wilcox.test(data_mod[[Metabolite]] ~
+                              model)$p.value
+        return(data.frame(Metabolite = Metabolite, t_value = t_val,
+                          pval = p_val))
+      })
+    }
+  }
+  else if (test_type == "welch") {
+    Run_Tests <- function(data_mod, Vect, model) {
+      results <- ldply(Vect, function(Metabolite) {
+        t_val = t.test(data_mod[[Metabolite]] ~ model,
+                       var.equal = FALSE)$statistic
+        p_val = t.test(data_mod[[Metabolite]] ~ model,
+                       var.equal = FALSE)$p.value
+        return(data.frame(Metabolite = Metabolite, t_value = t_val,
+                          pval = p_val))
+      })
+    }
+  }
+
+  results <- Run_Tests(data_mod = data_mod, Vect = Vect, model = model)
+
+  }
   #Compute raw count means
   data_Log$Factor <- factor(data_Log$Factor, levels = c(numerator, denominator))
   data_Numeric$Factor = data_Log$Factor
-  Means <- data_Numeric %>% group_by(Factor) %>% summarise_all(funs(mean))
+  Means <- data_Numeric %>% group_by(Factor) %>% summarise_all(mean)
   Means_T = as.data.frame(t(Means))
   colnames(Means_T) <- as.character(unlist(Means_T[1,]))
   Means_T = Means_T[-1,]
@@ -124,7 +277,7 @@ omu_summary <- function(count_data, metadata, numerator, denominator, response_v
   st.err <- function(x) sd(x)/sqrt(length(x))
 
   #Compute standard deviation
-  stdev <- data_Log %>% group_by(Factor) %>% summarise_all(funs(sd))
+  stdev <- data_Log %>% group_by(Factor) %>% summarise_all(sd)
   stdev <- as.data.frame(stdev)
   rownames(stdev) <- stdev[,"Factor"]
   stdev[,"Factor"] <- NULL
@@ -137,7 +290,7 @@ omu_summary <- function(count_data, metadata, numerator, denominator, response_v
   colnames(stdev_t)[3] <- paste(colnames(stdev_t)[3], "stdev", sep = ".")
 
   #Compute standard error
-  SE <- data_Log %>% group_by(Factor) %>% summarise_all(funs(st.err))
+  SE <- data_Log %>% group_by(Factor) %>% summarise_all(st.err)
   SE <- as.data.frame(SE)
   rownames(SE) <- SE[,"Factor"]
   SE[,"Factor"] <- NULL

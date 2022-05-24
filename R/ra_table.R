@@ -14,7 +14,7 @@
 #' response_variable = "Metabolite", Factor = "Treatment",
 #' log_transform = TRUE, p_adjust = "BH", test_type = "welch")
 #'
-#' fold_change_counts <- count_fold_changes(count_data = t_test_df, "Class",
+#' fold_change_counts <- count_fold_changes(count_data = t_test_df,
 #' column = "Class", sig_threshold = 0.05, keep_unknowns = FALSE)
 #'
 #' ra_table(fc_data = fold_change_counts, variable = "Class")
@@ -23,14 +23,14 @@
 ra_table <- function(fc_data,variable){
 
     #Make decrease table
-    data_dec = fc_data[fc_data$colour %in% "Decrease",]
+    data_dec = fc_data[fc_data$color %in% "Decrease",]
     data_dec$Decrease = abs(data_dec$Significant_Changes)
     data_dec$Decrease = prop.table(data_dec$Decrease)
     data_dec$Decrease = data_dec$Decrease * 100
     data_dec = data_dec[,c(1,4)]
 
     #Make increase table
-    data_inc = fc_data[fc_data$colour %in% "Increase",]
+    data_inc = fc_data[fc_data$color %in% "Increase",]
     data_inc$Increase = data_inc$Significant_Changes
     data_inc$Increase = prop.table(data_inc$Increase)
     data_inc$Increase = data_inc$Increase * 100

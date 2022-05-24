@@ -4,7 +4,7 @@
 \alias{plot_bar}
 \title{Create a bar plot}
 \usage{
-plot_bar(fc_data, fill, size, color)
+plot_bar(fc_data, fill, size = c(1, 1), outline_color = c("black", "black"))
 }
 \arguments{
 \item{fc_data}{The output file from Count_Fold_Changes}
@@ -13,9 +13,9 @@ plot_bar(fc_data, fill, size, color)
 the first color is for the "Decrease" bar while the second
 is for "Increase"}
 
-\item{size}{A character vector of 2 numbers for the size of the bar outlines.}
+\item{size}{A numeric vector of 2 numbers for the size of the bar outlines.}
 
-\item{color}{A character vector of length 2 containing colors for the bar outlines}
+\item{outline_color}{A character vector of length 2 containing colors for the bar outlines}
 }
 \description{
 Creates a ggplot2 object using the output file from the count_fold_changes function
@@ -28,9 +28,9 @@ metadata = c57_nos2KO_mouse_metadata, numerator = "Strep", denominator = "Mock",
 response_variable = "Metabolite", Factor = "Treatment",
 log_transform = TRUE, p_adjust = "BH", test_type = "welch")
 
-fold_change_counts <- count_fold_changes(count_data = t_test_df, "Class",
+fold_change_counts <- count_fold_changes(count_data = t_test_df,
 column = "Class", sig_threshold = 0.05, keep_unknowns = FALSE)
 
 plot_bar(fc_data = fold_change_counts, fill = c("firebrick2", "dodgerblue2"),
-color = c("black", "black"), size = c(1,1))
+outline_color = c("black", "black"), size = c(1,1))
 }

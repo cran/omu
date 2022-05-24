@@ -1,25 +1,24 @@
 Package: omu
 Title: A Metabolomics Analysis Tool for Intuitive Figures and
         Convenient Metadata Collection
-Version: 1.0.4
+Version: 1.0.5
 Authors@R: person("Connor", "Tiffany", email = "crtiffany@ucdavis.edu", role = c("aut", "cre"))
-Description: Facilitates the creation of intuitive figures to describe metabolomics data by utilizing Kyoto Encyclopedia of Genes and Genomes (KEGG) hierarchy data, and gathers functional orthology and gene data using the package 'KEGGREST' to access the 'KEGG' API.
+Description: Facilitates the creation of intuitive figures to describe metabolomics data by utilizing Kyoto Encyclopedia of Genes and Genomes (KEGG) hierarchy data, and gathers functional orthology and gene data from the KEGG-REST API.
 Depends: R (>= 3.3.0)
-biocViews:
-Imports: plyr, dplyr, stringr, KEGGREST, reshape2, ggfortify, ggplot2,
-        magrittr, tidyr
+Imports: plyr, dplyr, stringr, httr, reshape2, ggfortify, ggplot2,
+        magrittr, tidyr, broom, FSA, rstatix, randomForest, caret
 License: GPL-2
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.2
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 URL: https://github.com/connor-reid-tiffany/Omu,
         https://www.kegg.jp/kegg/rest/keggapi.html
 BugReports: https://github.com/connor-reid-tiffany/Omu/issues
 NeedsCompilation: no
-Packaged: 2020-05-18 19:07:22 UTC; crtif
+Packaged: 2022-05-24 20:45:35 UTC; crtif
 Author: Connor Tiffany [aut, cre]
 Maintainer: Connor Tiffany <crtiffany@ucdavis.edu>
 Repository: CRAN
-Date/Publication: 2020-05-18 19:40:02 UTC
+Date/Publication: 2022-05-24 23:40:09 UTC
