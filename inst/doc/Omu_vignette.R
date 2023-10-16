@@ -50,11 +50,6 @@ DF_s_trunc <- DF_stats_sub[c(1:5),]
 DF_s_trunc <- DF_s_trunc[,c(1,9,12,13,14,43)]
 kable(DF_s_trunc)
 
-## ----echo=FALSE,message=FALSE, warning=FALSE,cache = FALSE, results = 'hide'----
-DF_s_trunc_g <- KEGG_gather(DF_stats_sub)
-
-kable(head(DF_s_trunc_g, n = 5))
-
 ## ----echo=FALSE, warning=FALSE------------------------------------------------
 DF_stats_counts <- count_fold_changes(count_data = DF_stats, column = "Class", sig_threshold = 0.05, keep_unknowns = FALSE)
 kable(DF_stats_counts)
