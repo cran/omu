@@ -1,4 +1,4 @@
-fd83f0e00a911b107c4cdfe361cc165d *DESCRIPTION
+392901d5b9525a6921fc33bef01169e8 *DESCRIPTION
 82adffca3b18e0b423d0eeb1896d56f7 *NAMESPACE
 e5f11eed113457c9200acaa4db021644 *R/Internal_Functions.R
 7900991bdba6c2ec1b08c1b8e061057c *R/KEGG_gather.R
@@ -22,7 +22,7 @@ b31fcc866747e9316705c25e38136fa3 *R/read_metabo.R
 c5b7800d89fd4753ccf210c5a741a43a *R/rf_plot_functions.R
 f4820338957389c3565b00704d4ab261 *R/sysdata.rda
 2c4076aa9d1ec7b9bb4eb7df27d13548 *R/transform_functions.R
-e1393b83454040b68011d4acef521a68 *build/vignette.rds
+47fbbb2bcf34665630badcf1db2b6ccd *build/vignette.rds
 225bb77a40c94a399a4ff485c4e1b3ac *data/c57_nos2KO_mouse_countDF.rda
 32454291688c75509ffce51baa8b2c2b *data/c57_nos2KO_mouse_metadata.rda
 cc04bf30381d1f223b779d9d9f3b07fa *inst/CITATION
